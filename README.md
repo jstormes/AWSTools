@@ -46,7 +46,8 @@ TBD
   
 * An extension of the previous error is two long-running scrips on the same docker instance
   It might be necessary to use shared memory and lock to make sure the sequenceToken is correct
-  across the two running PHP instances.  Embrace the statelessness of the cloud!!!
+  across the two running PHP instances.  Embrace the statelessness of the cloud!!!  Or let the call 
+  fail and try to recover the sequenceToken, that might be a performance nightmare.
 
 # To Do
 
