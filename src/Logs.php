@@ -35,6 +35,11 @@ class Logs
     /** @var array  */
     private $formatters = [];
 
+    /** @var false|string  */
+    private $today;
+
+    private $config;
+
     /**
      * Logs constructor.
      * $config = [
@@ -51,9 +56,11 @@ class Logs
      */
     function __construct(array $config) {
 
+        $this->config = $config;
+
         if (isset($config['logStreamPrefix'])){
-            $today = date("Y-m-d");
-            $this->setLogStream($config['logStreamPrefix']."_".$today);
+            $this->today = date("Y-m-d");
+            $this->setLogStream($config['logStreamPrefix']."_".$this->today);
         }
         else {
             throw new \Exception('"logStreamPrefix" not in config, "logStreamPrefix" is required.');
@@ -215,6 +222,12 @@ class Logs
     }
 
     private function logProxy(string $function, string $message, array $context= []) {
+
+        if ($this->today != date("Y-m-d")) {
+            $this->today = date("Y-m-d");
+            $this->setLogStream($this->config['logStreamPrefix']."_".$this->today);
+            $this->createLogStream($this->getLogGroup(),$this->getLogStreamPrefix());
+        }
 
         /** @var FormatterInterface $formatter */
         $formatter=null;
