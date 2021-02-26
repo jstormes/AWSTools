@@ -37,6 +37,13 @@ Look in the CloudWatch logs to see the output from the examples.
 
 TBD
 
+# Known issues
+
+* If you have two PHP apps running at the same time and logging to the same stream, you will have issues
+  with sequenceToken.  You need to make sure each PHP Application instance (aka Docker Instance)
+  gets its own stream.  My current ideas is to use the HOSTNAME as it is unique to each Docker
+  instance as part of the stream name.
+
 # To Do
 
 * Allow `Exception` class to be passed as context and create a sample `Formatter`
