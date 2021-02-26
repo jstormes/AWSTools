@@ -1,2 +1,2 @@
-# AWSTools
-PHP Wrappers to make AWS services easer in PHP
+# CloudWatch
+A wrapper around AWS services to make the easier to use in PHP.
