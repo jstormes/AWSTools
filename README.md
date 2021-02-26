@@ -43,6 +43,10 @@ TBD
   with sequenceToken.  You need to make sure each PHP Application instance (aka Docker Instance)
   gets its own stream.  My current ideas is to use the HOSTNAME as it is unique to each Docker
   instance as part of the stream name.
+  
+* An extension of the previous error is two long-running scrips on the same docker instance
+  It might be necessary to use shared memory and lock to make sure the sequenceToken is correct
+  across the two running PHP instances.  Embrace the statelessness of the cloud!!!
 
 # To Do
 
