@@ -6,7 +6,7 @@
         "aws/aws-sdk-php": "^3.173",
         "ext-json": "*"
     },
-    "license": "GPL v3.0",
+    "license": "GPL-3.0-or-later",
     "authors": [
         {
             "name": "James Stormes",
