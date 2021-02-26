@@ -1,4 +1,4 @@
-# CloudWatch
+# AWS Tools
 A wrapper around AWS services to make the easier to use in PHP.
 
 # Quickstart
@@ -38,6 +38,10 @@ Look in the CloudWatch logs to see the output from the examples.
 TBD
 
 # Known issues
+
+* Fatal flaw - We need to recover when sequenceToken is out of sync and we need to use our 
+  container instance in the stream name.  It would also be a good idea to keep the sequenceToken
+  in shared memory for performance reasons.
 
 * If you have two PHP apps running at the same time and logging to the same stream, you will have issues
   with sequenceToken.  You need to make sure each PHP Application instance (aka Docker Instance)
