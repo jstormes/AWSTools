@@ -41,7 +41,8 @@ TBD
 
 * A fatal flaw - We need to recover when sequenceToken is out of sync and we need to use our 
   container instance in the stream name.  It would also be a good idea to keep the sequenceToken
-  in shared memory for performance reasons.
+  in shared memory for performance reasons.  CloudWatch is not stateless, it looks like it is a
+  blockchain of some type, that is a guess.
 
 * If you have two PHP apps running at the same time and logging to the same stream, you will have issues
   with sequenceToken.  You need to make sure each PHP Application instance (aka Docker Instance)
