@@ -31,7 +31,7 @@ Run the demos:
 
 `./bin/cli-demo-formatters.php`
 
-
+Look in the CloudWatch logs to see the output from the examples.
 
 ## PHP in Docker
 
@@ -43,4 +43,7 @@ TBD
 * Better use of Stream Naming, not sure how but perhaps something with the `Formatter`
 * Create examples of `try` `catch` use case
 * Create examples of `set_error_handler` use case
+* Create ZF2 DI use case example
 * Create squelch option and use case examples
+* Create method for chaining `formatter`
+* Create example of using `formatter` to call a new instance of `Logs`

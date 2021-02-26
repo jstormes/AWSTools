@@ -1,6 +1,6 @@
 {
-    "name": "jstormes/cloud-watch",
-    "description": "A very light weight wrapper around AWS CloudWatch as a PHP composer package.",
+    "name": "jstormes/aws-tools",
+    "description": "A very light weight wrapper around AWS services as a PHP composer package.",
     "type": "library",
     "require": {
         "aws/aws-sdk-php": "^3.173",
@@ -16,11 +16,6 @@
     "autoload": {
         "psr-4": {
             "JStormes\\AWSwrapper\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "JStormes\\AWSwrapper\\Test\\": "test/src/"
         }
     }
 }
