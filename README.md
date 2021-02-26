@@ -39,7 +39,7 @@ TBD
 
 # Known issues
 
-* Fatal flaw - We need to recover when sequenceToken is out of sync and we need to use our 
+* A fatal flaw - We need to recover when sequenceToken is out of sync and we need to use our 
   container instance in the stream name.  It would also be a good idea to keep the sequenceToken
   in shared memory for performance reasons.
 
