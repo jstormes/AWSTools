@@ -13,7 +13,7 @@ $Logs = new Logs([
     'version' => 'latest',
     'logGroup' => "testGroup3",
     'logStreamPrefix' => "testStream3",
-    'system' => 'system',
+    'system' => 'jstormes',
     'application' => str_replace('.php','',basename(__FILE__))
 ]);
 
@@ -27,3 +27,5 @@ $Logs->critical("This is an stock critical message");
 // Dynamic severity demo.
 $Logs->test("this is dynamic severity message");
 $Logs->jstomres("This is also a dynamic severity message");
+
+$Logs->login("This is a message from class");

@@ -6,7 +6,7 @@ namespace JStormes\AWSwrapper;
 
 class AddressFormatterExample implements FormatterInterface
 {
-    public function isCogent($severity, $msg, $context): bool {
+    public function isCogent(string $severity, string $msg, $context): bool {
 
         $valid = true;
         if (!isset($context['address'])) $valid = false;
@@ -17,7 +17,7 @@ class AddressFormatterExample implements FormatterInterface
         return $valid;
     }
 
-    public function format($severity, $msg, $context) : string {
+    public function format(string $severity, string $msg, $context) : string {
 
         $payload= [
             'severity' => $severity,

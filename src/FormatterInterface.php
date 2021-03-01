@@ -6,6 +6,6 @@ namespace JStormes\AWSwrapper;
 
 interface FormatterInterface
 {
-    public function isCogent($severity, $msg, $context): bool;
-    public function format($severity, $msg, $context) : string;
+    public function isCogent(string $severity, string $msg, $context): bool;
+    public function format(string $severity, string $msg, $context) : string;
 }

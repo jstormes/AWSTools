@@ -11,7 +11,7 @@ $Log = new Logs([
     'region' => 'us-west-2',
     'version' => 'latest',
     'logStreamPrefix' => "Minimal",
-    'system' => 'system'
+    'system' => 'test3'
 ]);
 
 $Log->debug("This is an Minimal debug message");

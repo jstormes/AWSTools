@@ -15,7 +15,7 @@ $LazyLoad = new LazyLoad([
     'version' => 'latest',
     'logGroup' => "testGroup3",
     'logStreamPrefix' => "testStream3",
-    'system' => 'system',
+    'system' => 'jstormes',
     'application' => str_replace('.php','',basename(__FILE__))
 ]);
 

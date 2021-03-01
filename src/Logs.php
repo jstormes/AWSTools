@@ -35,6 +35,9 @@ class Logs
     /** @var array  */
     private $formatters = [];
 
+    /** @var GenericLogFormatter|null  */
+    private $defaultMsgFormatter = null;
+
     /**
      * Logs constructor.
      * $config = [
@@ -52,8 +55,7 @@ class Logs
     function __construct(array $config) {
 
         if (isset($config['logStreamPrefix'])){
-            $today = date("Y-m-d");
-            $this->setLogStream($config['logStreamPrefix']."_".$today);
+            $this->setLogStreamPrefix($config['logStreamPrefix']);
         }
         else {
             throw new \Exception('"logStreamPrefix" not in config, "logStreamPrefix" is required.');
@@ -75,7 +77,6 @@ class Logs
                 $logGroup .= "/".$config['logGroup'];
         $this->setLogGroup($logGroup);
 
-
         if (isset($config['formatters'])) {
             if (is_array($config['formatters'])) {
                 foreach ($config['formatters'] as $formatter) {
@@ -87,20 +88,16 @@ class Logs
             }
         }
 
+        $this->defaultMsgFormatter = new GenericLogFormatter();
+
         $this->cloudWatchLogsClient = new CloudWatchLogsClient($config);
-
-        if (!($this->logGroupExists($this->getLogGroup())))
-            $this->createLogGroup($this->getLogGroup());
-
-        if (!($this->logStreamExists($this->getLogGroup(),$this->getLogStreamPrefix())))
-            $this->createLogStream($this->getLogGroup(),$this->getLogStreamPrefix());
 
     }
 
     private function logGroupExists($groupName): bool {
 
         try {
-            $results = $this->cloudWatchLogsClient->describeLogStreams([
+            $this->cloudWatchLogsClient->describeLogStreams([
                 "logGroupName" => $groupName
             ]);
         }
@@ -110,6 +107,13 @@ class Logs
         return true;
     }
 
+    private function createLogGroup($logGroup) {
+
+        $this->cloudWatchLogsClient->createLogGroup([
+            'logGroupName' => $logGroup,
+        ]);
+    }
+
     private function logStreamExists($groupName, $streamName):bool {
 
         $results = $this->cloudWatchLogsClient->describeLogStreams([
@@ -117,130 +121,157 @@ class Logs
             "logStreamNamePrefix" => $streamName
         ]);
 
-        if (isset($results['logStreams'][0]["logStreamName"]))
-            if ($results['logStreams'][0]["logStreamName"]===$streamName) {
-
-                if (isset($results['logStreams'][0]['uploadSequenceToken']))
-                    $this->setSequenceToken($results['logStreams'][0]['uploadSequenceToken']);
-
+        if (isset($results['logStreams'][0]["logStreamName"])) {
+            if ($results['logStreams'][0]["logStreamName"] === $streamName) {
                 return true;
             }
+        }
 
         return false;
     }
 
-    private function createLogGroup($logGroup) {
-
-        $this->cloudWatchLogsClient->createLogGroup([
-            'logGroupName' => $logGroup,
-        ]);
-
-    }
-
     private function createLogStream($logGroup, $streamName) {
 
-        $this->cloudWatchLogsClient->createLogStream([
-            'logGroupName' => $logGroup,
-            'logStreamName' => $streamName
-        ]);
+        if (!$this->logGroupExists($logGroup)) {
+            $this->createLogGroup($logGroup);
+        }
+
+        if (!$this->logStreamExists($logGroup, $streamName)) {
+            $this->cloudWatchLogsClient->createLogStream([
+                'logGroupName' => $logGroup,
+                'logStreamName' => $streamName
+            ]);
+        }
 
     }
 
-    private function log($groupName, $streamName, $message) : Result  {
+    private function log( $message) : Result  {
 
-        $results = $this->cloudWatchLogsClient->putLogEvents(array(
+        $retry = 10;
 
-            'logGroupName' => $groupName,
-            'logStreamName' => $streamName,
-            'logEvents' => array(
-                array(
-                    'timestamp' => round(microtime(true) * 1000),
-                    'message' => $message,
-                ),
-            ),
-            'sequenceToken' => $this->getSequenceToken()
-        ));
+        for ($i=0;$i<$retry;$i++){
+            try {
+                $results = $this->cloudWatchLogsClient->putLogEvents(array(
 
-        $this->setSequenceToken($results['nextSequenceToken']);
+                    'logGroupName' => $this->getLogGroup(),
+                    'logStreamName' => $this->getLogStream(),
+                    'logEvents' => array(
+                        array(
+                            'timestamp' => round(microtime(true) * 1000),
+                            'message' => $message,
+                        ),
+                    ),
+                    'sequenceToken' => $this->getSequenceToken()
+                ));
 
-        return $results;
+                $this->setSequenceToken($results['nextSequenceToken']);
+
+                return $results;
+            }
+            catch (\Exception $ex) {
+
+                // Drill down into error message into the JSON formatted part.
+                $jsonMsg = strstr($ex->getMessage(),"{");
+                $jsonMsg = strstr(substr($jsonMsg,1), "{");
+
+                $jsonError = json_decode($jsonMsg);
+
+                switch ($jsonError->__type) {
+
+                    case "DataAlreadyAcceptedException":
+                    case "InvalidSequenceTokenException":
+                        // sequenceToken cache miss
+                        $this->setSequenceToken($jsonError->expectedSequenceToken);
+                        break;
+                    case "ResourceNotFoundException":
+                        // logStream does not exists yet
+                        $this->createLogStream($this->getLogGroup(),$this->getLogStream());
+                        $this->setSequenceToken(0);
+                        break;
+
+                    default:
+                        throw $ex;
+                }
+
+            }
+        }
+
+        throw new \Exception("Retries exceeded trying to write to log.");
     }
 
-    /**
-     * @param string $message
-     * @param array $context
-     */
-    public function critical(string $message, array $context= []) {
-        $this->logProxy(__FUNCTION__, $message, $context);
-    }
-
-    /**
-     * @param string $message
-     * @param array $context
-     */
-    public function error(string $message, array $context= []) {
-        $this->logProxy(__FUNCTION__, $message, $context);
-    }
-
-    /**
-     * @param string $message
-     * @param array $context
-     */
-    public function warning(string $message, array $context= []) {
-        $this->logProxy(__FUNCTION__, $message, $context);
-    }
-
-    /**
-     * @param string $message
-     * @param array $context
-     */
-    public function monitor(string $message, array $context= []) {
-        $this->logProxy(__FUNCTION__, $message, $context);
-    }
-
-    /**
-     * @param string $message
-     * @param array $context
-     */
-    public function info(string $message, array $context= []) {
-        $this->logProxy(__FUNCTION__, $message, $context);
-    }
-
-    /**
-     * @param string $message
-     * @param array $context
-     */
-    public function debug(string $message, array $context= []) {
-        $this->logProxy(__FUNCTION__, $message, $context);
-    }
-
-    private function logProxy(string $function, string $message, array $context= []) {
+    private function logProxy(string $function, string $message, $context=null) {
 
         /** @var FormatterInterface $formatter */
         $formatter=null;
         foreach($this->formatters as $formatter) {
             if ($formatter->isCogent($function,$message, $context)) {
-                $this->log(
-                    $this->getLogGroup(),
-                    $this->getLogStreamPrefix(),
-                    $formatter->format($function,$message, $context)
-                );
+                $this->log($formatter->format($function,$message, $context));
                 return;
             }
         }
-        $message = $this->buildGenericMessage($function, $message);
-        $this->log($this->getLogGroup(), $this->getLogStreamPrefix(), $message);
+
+        $this->log($this->defaultMsgFormatter->format($function, $message, $context));
+
+    }
+
+    /**
+     * @param string $message
+     * @param array $context
+     */
+    public function critical(string $message, $context=null) {
+        $this->logProxy(__FUNCTION__, $message, $context);
+    }
+
+    /**
+     * @param string $message
+     * @param array $context
+     */
+    public function error(string $message, $context=null) {
+        $this->logProxy(__FUNCTION__, $message, $context);
+    }
+
+    /**
+     * @param string $message
+     * @param array $context
+     */
+    public function warning(string $message, $context=null) {
+        $this->logProxy(__FUNCTION__, $message, $context);
+    }
+
+    /**
+     * @param string $message
+     * @param array $context
+     */
+    public function monitor(string $message, $context=null) {
+        $this->logProxy(__FUNCTION__, $message, $context);
+    }
+
+    /**
+     * @param string $message
+     * @param array $context
+     */
+    public function info(string $message, $context=null) {
+        $this->logProxy(__FUNCTION__, $message, $context);
+    }
+
+    /**
+     * @param string $message
+     * @param array $context
+     */
+    public function debug(string $message, $context=null) {
+        $this->logProxy(__FUNCTION__, $message, $context);
     }
 
     public function __call($function, $arg) {
         if (isset($arg)) {
             $message = '';
-            $context=[];
+            $context=null;
             if (isset($arg[0]))
                 $message = $arg[0];
             if (isset($arg[1]))
                 $context = $arg[1];
-            return $this->logProxy($function, $message, $context);
+            $this->logProxy($function, $message, $context);
+            return;
         }
 
         throw new \Exception('invalid function call: '.$function);
@@ -248,12 +279,14 @@ class Logs
 
     private function buildGenericMessage($severity, $message) : string {
 
-        $newMessage = "[".$severity."]\n";
-        $newMessage .= $this->getSystem()."\n";
-        $newMessage .= $this->getApplication()."\n";
-        $newMessage .= $message."\n";
+        $payload= [
+            'severity' => $severity,
+            'msg' => $message,
+            '__type' => 'GENERIC'
+        ];
 
-        return $newMessage;
+        return json_encode($payload, JSON_PRETTY_PRINT);
+
     }
 
     /**
@@ -271,42 +304,6 @@ class Logs
     private function setSequenceToken(string $sequenceToken): Logs
     {
         $this->sequenceToken = $sequenceToken;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    private function getLogGroupName(): string
-    {
-        return $this->logGroupName;
-    }
-
-    /**
-     * @param string $logGroupName
-     * @return Logs
-     */
-    private function setLogGroupName(string $logGroupName): Logs
-    {
-        $this->logGroupName = $logGroupName;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    private function getLogStreamNamePrefix(): string
-    {
-        return $this->logStreamNamePrefix;
-    }
-
-    /**
-     * @param string $logStreamNamePrefix
-     * @return Logs
-     */
-    private function setLogStreamNamePrefix(string $logStreamNamePrefix): Logs
-    {
-        $this->logStreamNamePrefix = $logStreamNamePrefix;
         return $this;
     }
 
@@ -340,10 +337,16 @@ class Logs
      * @param string $logStreamPrefix
      * @return Logs
      */
-    private function setLogStream(string $logStreamPrefix): Logs
+    private function setLogStreamPrefix(string $logStreamPrefix): Logs
     {
         $this->logStreamPrefix = $logStreamPrefix;
         return $this;
+    }
+
+    private  function getLogStream() : string
+    {
+        $today = date("Y-m-d");
+        return $this->getLogStreamPrefix()."_".$today;
     }
 
     /**

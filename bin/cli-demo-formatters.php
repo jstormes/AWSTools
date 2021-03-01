@@ -15,7 +15,7 @@ $Log = new Logs([
     'version' => 'latest',
     'logGroup' => "testGroup3",
     'logStreamPrefix' => "testStream3",
-    'system' => 'system',
+    'system' => 'david',
     'application' => str_replace('.php','',basename(__FILE__)),
     'formatters' => [$addressFormatter, $loginFormatter]
 ]);
