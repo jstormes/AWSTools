@@ -88,10 +88,11 @@ class Logs
             }
         }
 
-        $this->defaultMsgFormatter = new GenericLogFormatter();
+        if (!isset($config['defaultFormatter'])) {
+            $this->defaultMsgFormatter = new GenericLogFormatter();
+        }
 
         $this->cloudWatchLogsClient = new CloudWatchLogsClient($config);
-
     }
 
     private function logGroupExists($groupName): bool {
@@ -275,18 +276,6 @@ class Logs
         }
 
         throw new \Exception('invalid function call: '.$function);
-    }
-
-    private function buildGenericMessage($severity, $message) : string {
-
-        $payload= [
-            'severity' => $severity,
-            'msg' => $message,
-            '__type' => 'GENERIC'
-        ];
-
-        return json_encode($payload, JSON_PRETTY_PRINT);
-
     }
 
     /**
