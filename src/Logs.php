@@ -26,7 +26,7 @@ class Logs
     /** @var string  */
     private $application = '';
 
-    /** @var array  */
+    /** @var array */
     private $formatters = [];
 
     /** @var GenericLogFormatter|null  */
@@ -165,7 +165,7 @@ class Logs
             }
             catch (\Exception $ex) {
 
-                // Drill down into error message into the JSON formatted part.
+                // Drill down into error message to the JSON formatted part.
                 $jsonMsg = strstr($ex->getMessage(),"{");
                 $jsonMsg = strstr(substr($jsonMsg,1), "{");
 

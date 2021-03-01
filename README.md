@@ -39,24 +39,19 @@ TBD
 
 # Known issues
 
-* A fatal flaw - We need to recover when sequenceToken is out of sync and we need to use our 
-  container instance in the stream name.  It would also be a good idea to keep the sequenceToken
-  in shared memory for performance reasons.  CloudWatch is not stateless, it looks like it is a
-  blockchain of some type, that is a guess.
-
 * If you have two PHP apps running at the same time and logging to the same stream, you will have issues
-  with sequenceToken.  You need to make sure each PHP Application instance (aka Docker Instance)
-  gets its own stream.  My current ideas is to use the HOSTNAME as it is unique to each Docker
-  instance as part of the stream name.
+  with sequenceToken, this will cause a performance issue.  You need to make sure each PHP Application 
+  instance (aka Docker Instance) gets its own stream.  My current ideas is to use the HOSTNAME as it 
+  is unique to each Docker instance as part of the stream name.
   
-* An extension of the previous error is two long-running scrips on the same docker instance
+* An extension of the previous issue is two long-running scrips on the same docker instance.
   It might be necessary to use shared memory and lock to make sure the sequenceToken is correct
   across the two running PHP instances.  Embrace the statelessness of the cloud!!!  Or let the call 
   fail and try to recover the sequenceToken, that might be a performance nightmare.
 
 # To Do
 
-* Allow `Exception` class to be passed as context and create a sample `Formatter`
+* Allow S3 file for stack dump.
 * Better use of Stream Naming, not sure how but perhaps something with the `Formatter`
 * Create examples of `try` `catch` use case
 * Create examples of `set_error_handler` use case
