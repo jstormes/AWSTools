@@ -15,12 +15,6 @@ class Logs
     private $sequenceToken = '0';
 
     /** @var string  */
-    private $logGroupName = '';
-
-    /** @var string  */
-    private $logStreamNamePrefix = '';
-
-    /** @var string  */
     private $logGroup = '';
 
     /** @var string  */
