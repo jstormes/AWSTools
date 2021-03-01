@@ -31,6 +31,8 @@ Run the demos:
 
 `./bin/cli-demo-formatters.php`
 
+`./bin/cli-demo-log-context-obj.php`
+
 Look in the CloudWatch logs to see the output from the examples.
 
 ## PHP in Docker
