@@ -26,7 +26,7 @@ class GenericLogFormatter implements FormatterInterface
         }
 
         if (is_subclass_of($context, LogContextAbstract::class)) {
-            
+
             $payload= [
                 'severity' => $severity,
                 'msg' => $msg,
